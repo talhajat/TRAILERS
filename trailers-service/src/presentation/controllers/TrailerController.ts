@@ -31,6 +31,7 @@ export class TrailerController {
     private readonly getTrailersUseCase: GetTrailersUseCase
   ) {}
 
+
   /**
    * GET /trailers
    * Retrieve all trailers with optional filtering and pagination
@@ -100,6 +101,10 @@ export class TrailerController {
       if (error instanceof BadRequestException) {
         throw error;
       }
+      // Handle domain errors (like duplicate trailer ID/VIN)
+      if (error instanceof Error && error.message.includes('already exists')) {
+        throw new BadRequestException(error.message);
+      }
       throw new InternalServerErrorException('Failed to create trailer');
     }
   }
@@ -108,6 +113,11 @@ export class TrailerController {
    * Private helper: Validate CreateTrailerDto
    */
   private validateCreateTrailerDto(dto: CreateTrailerDto): void {
+    // Check if dto is empty or missing required fields
+    if (!dto || Object.keys(dto).length === 0) {
+      throw new BadRequestException('Request body cannot be empty');
+    }
+
     if (!dto.trailerType) {
       throw new BadRequestException('Trailer type is required');
     }
@@ -116,10 +126,6 @@ export class TrailerController {
       throw new BadRequestException('Ownership type is required');
     }
 
-    // Validate VIN format if provided
-    if (dto.vin && dto.vin.length !== 17) {
-      throw new BadRequestException('VIN must be exactly 17 characters');
-    }
 
     // Validate year if provided
     if (dto.year) {
@@ -135,8 +141,16 @@ export class TrailerController {
     }
 
     // Validate lease end date is in the future
-    if (dto.leaseEndDate && new Date(dto.leaseEndDate) <= new Date()) {
-      throw new BadRequestException('Lease end date must be in the future');
+    if (dto.leaseEndDate) {
+      const leaseDate = new Date(dto.leaseEndDate);
+      const today = new Date();
+      // Set time to start of day for fair comparison
+      today.setHours(0, 0, 0, 0);
+      leaseDate.setHours(0, 0, 0, 0);
+      
+      if (leaseDate <= today) {
+        throw new BadRequestException('Lease end date must be in the future');
+      }
     }
 
     // Validate numeric fields

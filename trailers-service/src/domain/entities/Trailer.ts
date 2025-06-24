@@ -97,8 +97,16 @@ export class Trailer {
     }
 
     // Business rule: Lease end date must be in the future
-    if (data.leaseEndDate && data.leaseEndDate <= new Date()) {
-      throw new Error('Lease end date must be in the future');
+    if (data.leaseEndDate) {
+      const leaseDate = new Date(data.leaseEndDate);
+      const today = new Date();
+      // Set time to start of day for fair comparison
+      today.setHours(0, 0, 0, 0);
+      leaseDate.setHours(0, 0, 0, 0);
+      
+      if (leaseDate <= today) {
+        throw new Error('Lease end date must be in the future');
+      }
     }
 
     // Set current location based on assigned yard or default
@@ -189,37 +197,6 @@ export class Trailer {
   public getAttachedTruckId(): string | undefined { return this.attachedTruckId; }
   public getCreatedAt(): Date { return this.createdAt; }
   public getUpdatedAt(): Date { return this.updatedAt; }
-
-  /**
-   * Business method: Assign trailer to a truck
-   * Implements business rules for trailer assignment
-   */
-  public assignToTruck(truckId: string): void {
-    if (this.status !== TrailerStatus.AVAILABLE) {
-      throw new Error('Only available trailers can be assigned to trucks');
-    }
-
-    this.attachedTruckId = truckId;
-    this.status = TrailerStatus.ASSIGNED;
-    this.updatedAt = new Date();
-  }
-
-  /**
-   * Business method: Release trailer from truck
-   */
-  public releaseFromTruck(): void {
-    this.attachedTruckId = undefined;
-    this.status = TrailerStatus.AVAILABLE;
-    this.updatedAt = new Date();
-  }
-
-  /**
-   * Business method: Update trailer location
-   */
-  public updateLocation(location: string): void {
-    this.currentLocation = location;
-    this.updatedAt = new Date();
-  }
 
   /**
    * Convert trailer to plain object for persistence

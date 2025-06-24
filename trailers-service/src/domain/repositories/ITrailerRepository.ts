@@ -16,24 +16,6 @@ export interface ITrailerRepository {
   save(trailer: Trailer): Promise<Trailer>;
 
   /**
-   * Find a trailer by its unique ID
-   * Returns undefined if not found
-   */
-  findById(id: string): Promise<Trailer | undefined>;
-
-  /**
-   * Find a trailer by its trailer ID (unit number)
-   * Returns undefined if not found
-   */
-  findByTrailerId(trailerId: string): Promise<Trailer | undefined>;
-
-  /**
-   * Find a trailer by its VIN
-   * Returns undefined if not found
-   */
-  findByVin(vin: string): Promise<Trailer | undefined>;
-
-  /**
    * Get all trailers with optional filtering and pagination
    */
   findAll(options?: {
@@ -47,18 +29,6 @@ export interface ITrailerRepository {
     page: number;
     limit: number;
   }>;
-
-  /**
-   * Update an existing trailer
-   * Returns the updated trailer
-   */
-  update(trailer: Trailer): Promise<Trailer>;
-
-  /**
-   * Delete a trailer by ID
-   * Returns true if deleted, false if not found
-   */
-  delete(id: string): Promise<boolean>;
 
   /**
    * Check if a trailer ID already exists

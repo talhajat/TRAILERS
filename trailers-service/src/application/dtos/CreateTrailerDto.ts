@@ -18,7 +18,7 @@ export class CreateTrailerDto {
   trailerId?: string; // Auto-generated if not provided
 
   @IsEnum(TrailerType)
-  trailerType: TrailerType = TrailerType.DRY_VAN;
+  trailerType!: TrailerType;
 
   @IsOptional()
   @IsNumber()
@@ -67,7 +67,7 @@ export class CreateTrailerDto {
 
   // Section 3: Ownership & Financials
   @IsEnum(OwnershipType)
-  ownershipType: OwnershipType = OwnershipType.OWNED;
+  ownershipType!: OwnershipType;
 
   @IsOptional()
   @IsDateString()

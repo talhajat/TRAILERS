@@ -37,41 +37,6 @@ export class TrailerSpecifications {
     capacity?: number,
     axleCount?: number
   ): TrailerSpecifications {
-    // Validate length (if provided)
-    if (length !== undefined && length !== null) {
-      if (length <= 0 || length > 100) {
-        throw new Error('Trailer length must be between 1 and 100 feet');
-      }
-    }
-
-    // Validate width (if provided)
-    if (width !== undefined && width !== null) {
-      if (width <= 0 || width > 200) {
-        throw new Error('Trailer width must be between 1 and 200 inches');
-      }
-    }
-
-    // Validate height (if provided)
-    if (height !== undefined && height !== null) {
-      if (height <= 0 || height > 300) {
-        throw new Error('Trailer height must be between 1 and 300 inches');
-      }
-    }
-
-    // Validate capacity (if provided)
-    if (capacity !== undefined && capacity !== null) {
-      if (capacity <= 0 || capacity > 200000) {
-        throw new Error('Trailer capacity must be between 1 and 200,000 pounds');
-      }
-    }
-
-    // Validate axle count (if provided)
-    if (axleCount !== undefined && axleCount !== null) {
-      if (axleCount < 1 || axleCount > 10) {
-        throw new Error('Trailer must have between 1 and 10 axles');
-      }
-    }
-
     return new TrailerSpecifications(length, width, height, capacity, axleCount);
   }
 

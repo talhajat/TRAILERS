@@ -24,15 +24,6 @@ export class VIN {
 
     const cleanedValue = value.trim().toUpperCase();
 
-    // Basic VIN validation rules
-    if (!this.isValidFormat(cleanedValue)) {
-      throw new Error('VIN must be 17 characters long and contain only letters and numbers');
-    }
-
-    if (this.containsInvalidCharacters(cleanedValue)) {
-      throw new Error('VIN cannot contain I, O, or Q characters');
-    }
-
     return new VIN(cleanedValue);
   }
 
@@ -71,27 +62,6 @@ export class VIN {
     return this.value === other.value;
   }
 
-  /**
-   * Private helper: Validate VIN format
-   */
-  private static isValidFormat(value: string): boolean {
-    // VIN must be exactly 17 characters
-    if (value.length !== 17) {
-      return false;
-    }
-
-    // VIN must contain only alphanumeric characters
-    const alphanumericRegex = /^[A-Z0-9]+$/;
-    return alphanumericRegex.test(value);
-  }
-
-  /**
-   * Private helper: Check for invalid characters
-   * VINs cannot contain I, O, or Q to avoid confusion with 1, 0
-   */
-  private static containsInvalidCharacters(value: string): boolean {
-    return /[IOQ]/.test(value);
-  }
 
   /**
    * Convert to string representation

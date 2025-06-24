@@ -64,39 +64,6 @@ export class TrailerRepository implements ITrailerRepository {
   }
 
   /**
-   * Find a trailer by its unique ID
-   */
-  async findById(id: string): Promise<Trailer | undefined> {
-    const trailer = await this.prisma.trailer.findUnique({
-      where: { id }
-    });
-
-    return trailer ? this.mapToEntity(trailer) : undefined;
-  }
-
-  /**
-   * Find a trailer by its trailer ID (unit number)
-   */
-  async findByTrailerId(trailerId: string): Promise<Trailer | undefined> {
-    const trailer = await this.prisma.trailer.findUnique({
-      where: { trailerId }
-    });
-
-    return trailer ? this.mapToEntity(trailer) : undefined;
-  }
-
-  /**
-   * Find a trailer by its VIN
-   */
-  async findByVin(vin: string): Promise<Trailer | undefined> {
-    const trailer = await this.prisma.trailer.findUnique({
-      where: { vin }
-    });
-
-    return trailer ? this.mapToEntity(trailer) : undefined;
-  }
-
-  /**
    * Get all trailers with optional filtering and pagination
    */
   async findAll(options?: {
@@ -140,65 +107,6 @@ export class TrailerRepository implements ITrailerRepository {
       page,
       limit
     };
-  }
-
-  /**
-   * Update an existing trailer
-   */
-  async update(trailer: Trailer): Promise<Trailer> {
-    const data = trailer.toObject();
-    
-    // Convert enum values to database format
-    const dbData = {
-      trailerId: data.trailerId,
-      trailerType: this.mapTrailerTypeToDb(data.trailerType),
-      year: data.year,
-      vin: data.vin,
-      color: data.color,
-      length: data.length,
-      width: data.width,
-      height: data.height,
-      capacity: data.capacity,
-      axleCount: data.axleCount,
-      ownershipType: this.mapOwnershipTypeToDb(data.ownershipType),
-      purchaseDate: data.purchaseDate,
-      leaseEndDate: data.leaseEndDate,
-      purchasePrice: data.purchasePrice,
-      licensePlate: data.licensePlate,
-      issuingState: data.issuingState,
-      registrationExp: data.registrationExp,
-      insurancePolicy: data.insurancePolicy,
-      insuranceExp: data.insuranceExp,
-      jurisdiction: data.jurisdiction,
-      gvwr: data.gvwr,
-      status: this.mapTrailerStatusToDb(data.status),
-      assignedYard: data.assignedYard,
-      currentLocation: data.currentLocation,
-      attachedTruckId: data.attachedTruckId,
-      updatedAt: new Date()
-    };
-
-    const updatedTrailer = await this.prisma.trailer.update({
-      where: { id: data.id },
-      data: dbData
-    });
-
-    return this.mapToEntity(updatedTrailer);
-  }
-
-  /**
-   * Delete a trailer by ID
-   */
-  async delete(id: string): Promise<boolean> {
-    try {
-      await this.prisma.trailer.delete({
-        where: { id }
-      });
-      return true;
-    } catch (error) {
-      // If trailer not found, return false
-      return false;
-    }
   }
 
   /**
