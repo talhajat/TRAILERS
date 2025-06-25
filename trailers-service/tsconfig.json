@@ -6,7 +6,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2020",
+    "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
@@ -17,6 +17,8 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
+    "types": ["jest", "node"],
+    "esModuleInterop": true,
     "paths": {
       "@/*": ["src/*"],
       "@domain/*": ["src/domain/*"],
@@ -24,5 +26,7 @@
       "@infrastructure/*": ["src/infrastructure/*"],
       "@presentation/*": ["src/presentation/*"]
     }
-  }
+  },
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

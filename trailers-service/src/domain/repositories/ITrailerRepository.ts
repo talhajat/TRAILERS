@@ -31,6 +31,13 @@ export interface ITrailerRepository {
   }>;
 
   /**
+   * Find a trailer by its unique ID
+   * Used to get detailed information about a specific trailer
+   * Returns null if trailer is not found
+   */
+  findById(id: string): Promise<Trailer | null>;
+
+  /**
    * Check if a trailer ID already exists
    * Used for uniqueness validation
    */

@@ -1,4 +1,4 @@
-import { Express } from 'express';
+/// <reference types="multer" />
 
 /**
  * Trailer Documents Upload DTO

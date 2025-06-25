@@ -1,0 +1,715 @@
+{
+  "info": {
+    "_postman_id": "trailers-service-e2e-tests",
+    "name": "Trailers Service E2E Tests",
+    "description": "End-to-end tests for the Trailers Service API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Setup",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is less than 1000ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api",
+              "host": ["{{baseUrl}}"],
+              "path": ["api"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trailer CRUD Operations",
+      "item": [
+        {
+          "name": "Create Trailer - Owned Dry Van",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has trailer data\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('trailerType');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "    ",
+                  "    // Store trailer ID for subsequent tests",
+                  "    pm.collectionVariables.set('createdTrailerId', jsonData.id);",
+                  "    pm.collectionVariables.set('createdTrailerDbId', jsonData.id);",
+                  "});",
+                  "",
+                  "pm.test(\"VIN is properly formatted\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.vin) {",
+                  "        pm.expect(jsonData.vin).to.match(/^[A-HJ-NPR-Z0-9]{17}$/);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate random VIN for testing",
+                  "const generateVIN = () => {",
+                  "    const chars = 'ABCDEFGHJKLMNPRSTUVWXYZ0123456789';",
+                  "    let vin = '';",
+                  "    for (let i = 0; i < 17; i++) {",
+                  "        vin += chars.charAt(Math.floor(Math.random() * chars.length));",
+                  "    }",
+                  "    return vin;",
+                  "};",
+                  "",
+                  "pm.collectionVariables.set('testVIN', generateVIN());"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trailerType\": \"dry_van\",\n  \"ownershipType\": \"owned\",\n  \"year\": 2023,\n  \"vin\": \"{{testVIN}}\",\n  \"color\": \"White\",\n  \"length\": 53,\n  \"width\": 102,\n  \"height\": 110,\n  \"capacity\": 45000,\n  \"axleCount\": 2,\n  \"purchaseDate\": \"2023-01-15\",\n  \"purchasePrice\": 35000,\n  \"licensePlate\": \"TEST123\",\n  \"issuingState\": \"CA\",\n  \"registrationExp\": \"2025-01-15\",\n  \"insurancePolicy\": \"POL123456\",\n  \"insuranceExp\": \"2025-06-30\",\n  \"jurisdiction\": \"California\",\n  \"gvwr\": 80000,\n  \"assignedYard\": \"Main Yard\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers"]
+            }
+          }
+        },
+        {
+          "name": "Create Trailer - Leased Reefer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has trailer data with lease info\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('trailerType');",
+                  "    pm.expect(jsonData.trailerType.toLowerCase()).to.equal('reefer');",
+                  "    ",
+                  "    // Store second trailer ID",
+                  "    pm.collectionVariables.set('leasedTrailerId', jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate random VIN for testing",
+                  "const generateVIN = () => {",
+                  "    const chars = 'ABCDEFGHJKLMNPRSTUVWXYZ0123456789';",
+                  "    let vin = '';",
+                  "    for (let i = 0; i < 17; i++) {",
+                  "        vin += chars.charAt(Math.floor(Math.random() * chars.length));",
+                  "    }",
+                  "    return vin;",
+                  "};",
+                  "",
+                  "// Set future lease end date",
+                  "const futureDate = new Date();",
+                  "futureDate.setFullYear(futureDate.getFullYear() + 2);",
+                  "pm.collectionVariables.set('leaseEndDate', futureDate.toISOString().split('T')[0]);",
+                  "pm.collectionVariables.set('testVIN2', generateVIN());"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trailerType\": \"reefer\",\n  \"ownershipType\": \"leased\",\n  \"year\": 2024,\n  \"vin\": \"{{testVIN2}}\",\n  \"color\": \"Silver\",\n  \"length\": 48,\n  \"width\": 102,\n  \"height\": 110,\n  \"capacity\": 40000,\n  \"axleCount\": 2,\n  \"leaseEndDate\": \"{{leaseEndDate}}\",\n  \"licensePlate\": \"LEASE456\",\n  \"issuingState\": \"NY\",\n  \"registrationExp\": \"2025-12-31\",\n  \"insurancePolicy\": \"LEASE789\",\n  \"insuranceExp\": \"2025-12-31\",\n  \"jurisdiction\": \"New York\",\n  \"gvwr\": 75000,\n  \"assignedYard\": \"East Yard\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers"]
+            }
+          }
+        },
+        {
+          "name": "Create Trailer - Invalid (Missing Required Fields)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message indicates missing required fields\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    const messageStr = Array.isArray(jsonData.message) ? jsonData.message.join(' ') : jsonData.message;",
+                  "    pm.expect(messageStr.toLowerCase()).to.include('must be');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"year\": 2023,\n  \"color\": \"Blue\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers"]
+            }
+          }
+        },
+        {
+          "name": "Create Trailer - Invalid Lease (Missing Lease End Date)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message indicates missing lease end date\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message.toLowerCase()).to.include('lease end date');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trailerType\": \"flatbed\",\n  \"ownershipType\": \"leased\",\n  \"year\": 2023\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers"]
+            }
+          }
+        },
+        {
+          "name": "Get All Trailers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has trailers array and pagination info\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('trailers');",
+                  "    pm.expect(jsonData.trailers).to.be.an('array');",
+                  "    pm.expect(jsonData).to.have.property('total');",
+                  "    pm.expect(jsonData).to.have.property('page');",
+                  "    pm.expect(jsonData).to.have.property('limit');",
+                  "});",
+                  "",
+                  "pm.test(\"Trailers array contains created trailers\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const createdTrailerId = pm.collectionVariables.get('createdTrailerId');",
+                  "    const trailerIds = jsonData.trailers.map(t => t.id);",
+                  "    pm.expect(trailerIds).to.include(createdTrailerId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers"]
+            }
+          }
+        },
+        {
+          "name": "Get Trailers with Pagination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Pagination parameters are respected\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.page).to.equal(1);",
+                  "    pm.expect(jsonData.limit).to.equal(5);",
+                  "    pm.expect(jsonData.trailers.length).to.be.at.most(5);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers?page=1&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Trailers by Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All returned trailers are of type dry_van\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    jsonData.trailers.forEach(trailer => {",
+                  "        pm.expect(trailer.trailerType.toLowerCase()).to.equal('dry van');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers?trailerType=dry_van",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers"],
+              "query": [
+                {
+                  "key": "trailerType",
+                  "value": "dry_van"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Trailer by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has complete trailer profile\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('basicInformation');",
+                  "    pm.expect(jsonData).to.have.property('specifications');",
+                  "    pm.expect(jsonData).to.have.property('ownershipFinancials');",
+                  "    pm.expect(jsonData).to.have.property('registrationCompliance');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "    pm.expect(jsonData).to.have.property('documents');",
+                  "});",
+                  "",
+                  "pm.test(\"Trailer ID matches requested ID\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const requestedId = pm.collectionVariables.get('createdTrailerId');",
+                  "    pm.expect(jsonData.unitNumber).to.equal(requestedId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers/{{createdTrailerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers", "{{createdTrailerId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Trailer by Database ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Can retrieve trailer by database ID\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('basicInformation');",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers/{{createdTrailerDbId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers", "{{createdTrailerDbId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Non-Existent Trailer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message indicates trailer not found\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message.toLowerCase()).to.include('not found');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers/NONEXISTENT999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers", "NONEXISTENT999"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Edge Cases",
+      "item": [
+        {
+          "name": "Create Trailer - Duplicate VIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message indicates duplicate VIN\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message.toLowerCase()).to.include('already exists');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trailerType\": \"tanker\",\n  \"ownershipType\": \"owned\",\n  \"vin\": \"{{testVIN}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers"]
+            }
+          }
+        },
+        {
+          "name": "Create Trailer - Invalid Year",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message indicates invalid year\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    const messageStr = Array.isArray(jsonData.message) ? jsonData.message.join(' ') : jsonData.message;",
+                  "    pm.expect(messageStr.toLowerCase()).to.include('year');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trailerType\": \"lowboy\",\n  \"ownershipType\": \"owned\",\n  \"year\": 1800\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers"]
+            }
+          }
+        },
+        {
+          "name": "Create Trailer - Past Lease End Date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message indicates lease date must be in future\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message.toLowerCase()).to.include('future');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trailerType\": \"step_deck\",\n  \"ownershipType\": \"leased\",\n  \"leaseEndDate\": \"2020-01-01\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers"]
+            }
+          }
+        },
+        {
+          "name": "Create Trailer - Negative Dimensions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message indicates positive value required\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    const messageStr = Array.isArray(jsonData.message) ? jsonData.message.join(' ') : jsonData.message;",
+                  "    pm.expect(messageStr.toLowerCase()).to.include('must not be less than');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trailerType\": \"other\",\n  \"ownershipType\": \"rented\",\n  \"length\": -10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trailers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trailers"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "createdTrailerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "createdTrailerDbId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "leasedTrailerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testVIN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testVIN2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "leaseEndDate",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

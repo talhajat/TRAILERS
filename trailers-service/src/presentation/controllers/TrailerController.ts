@@ -1,19 +1,24 @@
+/// <reference types="multer" />
 import {
   Controller,
   Get,
   Post,
   Body,
   Query,
+  Param,
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
+  NotFoundException
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { CreateTrailerUseCase } from '../../application/use-cases/CreateTrailerUseCase';
 import { GetTrailersUseCase } from '../../application/use-cases/GetTrailersUseCase';
+import { GetTrailerByIdUseCase } from '../../application/use-cases/GetTrailerByIdUseCase';
 import { CreateTrailerDto } from '../../application/dtos/CreateTrailerDto';
 import { TrailerResponseDto } from '../../application/dtos/TrailerResponseDto';
+import { TrailerProfileDto } from '../../application/dtos/TrailerProfileDto';
 import { TrailerDocumentsDto } from '../../application/dtos/TrailerDocumentsDto';
 
 /**
@@ -28,7 +33,8 @@ import { TrailerDocumentsDto } from '../../application/dtos/TrailerDocumentsDto'
 export class TrailerController {
   constructor(
     private readonly createTrailerUseCase: CreateTrailerUseCase,
-    private readonly getTrailersUseCase: GetTrailersUseCase
+    private readonly getTrailersUseCase: GetTrailersUseCase,
+    private readonly getTrailerByIdUseCase: GetTrailerByIdUseCase
   ) {}
 
 
@@ -66,6 +72,29 @@ export class TrailerController {
       };
     } catch (error) {
       throw new InternalServerErrorException('Failed to retrieve trailers');
+    }
+  }
+
+  /**
+   * GET /trailers/:id
+   * Retrieve detailed information about a specific trailer
+   * This endpoint is called when a user clicks on a trailer ID in the table
+   * Note: The :id parameter can be either the database ID or the trailer ID (e.g., TR501)
+   */
+  @Get(':id')
+  async getTrailerById(@Param('id') id: string): Promise<TrailerProfileDto> {
+    try {
+      // Execute the use case to get trailer profile
+      const trailerProfile = await this.getTrailerByIdUseCase.execute(id);
+      return trailerProfile;
+    } catch (error) {
+      // Handle specific errors
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      // Log unexpected errors for debugging
+      console.error('Error retrieving trailer profile:', error);
+      throw new InternalServerErrorException('Failed to retrieve trailer profile');
     }
   }
 

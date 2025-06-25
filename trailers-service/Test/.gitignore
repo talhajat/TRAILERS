@@ -1,0 +1,13 @@
+# Test results
+postman-test-results.json
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Newman reports
+newman/
+
+# Test uploads
+uploads/test/

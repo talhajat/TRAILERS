@@ -130,6 +130,31 @@ export class TrailerRepository implements ITrailerRepository {
   }
 
   /**
+   * Find a trailer by its unique ID
+   * Can accept either the database ID or the trailer ID (e.g., TR501)
+   * Returns null if trailer is not found
+   */
+  async findById(id: string): Promise<Trailer | null> {
+    // First try to find by database ID
+    let trailer = await this.prisma.trailer.findUnique({
+      where: { id }
+    });
+
+    // If not found, try to find by trailer ID
+    if (!trailer) {
+      trailer = await this.prisma.trailer.findFirst({
+        where: { trailerId: id }
+      });
+    }
+
+    if (!trailer) {
+      return null;
+    }
+
+    return this.mapToEntity(trailer);
+  }
+
+  /**
    * Private helper: Map database record to domain entity
    */
   private mapToEntity(dbTrailer: any): Trailer {

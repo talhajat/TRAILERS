@@ -1,100 +1,143 @@
 # Trailers Service E2E Tests
 
-This directory contains end-to-end tests for the Trailers Service API using Postman.
+This directory contains end-to-end tests for the Trailers Service API using Postman/Newman.
+
+## Overview
+
+The E2E tests ensure that all API endpoints work correctly with a real database. The tests:
+- Create a fresh test database before each run
+- Test all CRUD operations
+- Validate business rules and edge cases
+- Clean up after completion
 
 ## Prerequisites
 
-1. **Application Running**: Ensure the Trailers Service is running on `http://localhost:3001`
-   ```bash
-   npm run start:dev
-   ```
+1. **PostgreSQL** must be running locally on port 5432
+2. **Node.js** and **npm** installed
+3. **Newman** (Postman CLI) - will be installed automatically if missing
 
-2. **Database**: PostgreSQL database should be running and accessible
+## Test Structure
 
-## Running Tests with Postman
+- `trailers-service.postman_collection.json` - Postman collection with all test cases
+- `trailers-service.postman_environment.json` - Environment variables for tests
+- `setup-test-db.js` - Script to create fresh test database
+- `run-postman-tests.js` - Main test runner script
+- `run-e2e-tests.bat` - Windows batch file to run tests
 
-### Option 1: Using Postman GUI
+## Running Tests
 
-1. Open Postman
-2. Click "Import" button
-3. Select the file: `Trailers-API-E2E-Tests.postman_collection.json`
-4. Click "Run" to open the Collection Runner
-5. Click "Run Trailers Service - E2E Tests"
+### Windows
+Simply double-click `run-e2e-tests.bat` or run from command line:
+```bash
+cd trailers-service/test
+run-e2e-tests.bat
+```
 
-### Option 2: Using Newman (Command Line)
+### Manual Run
+```bash
+cd trailers-service/test
+node run-postman-tests.js
+```
 
-1. Install Newman globally:
-   ```bash
-   npm install -g newman
-   ```
+### Using npm script
+Add to `package.json`:
+```json
+"scripts": {
+  "test:e2e": "node test/run-postman-tests.js"
+}
+```
 
-2. Run the tests:
-   ```bash
-   newman run Trailers-API-E2E-Tests.postman_collection.json
-   ```
+Then run:
+```bash
+npm run test:e2e
+```
 
-3. Or use the provided script:
-   ```bash
-   node run-e2e-tests.js
-   ```
+## Test Cases
 
-## Test Coverage
+### Setup
+- Health Check - Verifies service is running
 
-The E2E test suite covers:
+### CRUD Operations
+1. **Create Trailer - Owned Dry Van**
+   - Creates a trailer with all fields
+   - Validates response structure
+   - Stores ID for subsequent tests
 
-1. **Health Check** - Verify API is running
-2. **Get All Trailers (Empty)** - Initial empty state
-3. **Create Trailer - Owned Dry Van** - Create a fully specified owned trailer
-4. **Create Trailer - Leased Refrigerated** - Create a leased trailer with lease end date
-5. **Create Trailer - Minimal Data** - Create with only required fields
-6. **Get All Trailers (With Data)** - Verify trailers are returned
-7. **Get Trailers with Pagination** - Test pagination parameters
-8. **Get Trailers Filtered by Status** - Test status filtering
-9. **Get Trailers Filtered by Type** - Test trailer type filtering
-10. **Create Trailer - Validation Error** - Missing required field
-11. **Create Trailer - Lease Validation Error** - Missing lease end date for leased trailer
-12. **Create Trailer - Duplicate ID Error** - Duplicate trailer ID validation
+2. **Create Trailer - Leased Reefer**
+   - Creates a leased trailer
+   - Validates lease end date requirement
 
-## Test Data
+3. **Create Trailer - Invalid Cases**
+   - Missing required fields
+   - Missing lease end date for leased trailers
 
-The tests create sample trailers with various configurations:
-- Different trailer types (Dry Van, Refrigerated, Flatbed)
-- Different ownership types (Owned, Leased)
-- Various specifications and optional fields
+4. **Get All Trailers**
+   - Retrieves trailer list
+   - Tests pagination
 
-## Expected Results
+5. **Get Trailers by Type**
+   - Filters by trailer type
 
-All tests should pass with:
-- ✅ 12 tests passing
-- 0 failures
-- Proper HTTP status codes (200, 201, 400)
-- Correct response data structures
+6. **Get Trailer by ID**
+   - Retrieves specific trailer
+   - Tests both trailer ID and database ID
+
+7. **Get Non-Existent Trailer**
+   - Validates 404 response
+
+### Edge Cases
+1. **Duplicate VIN** - Ensures VINs are unique
+2. **Invalid Year** - Validates year constraints
+3. **Past Lease End Date** - Ensures future dates only
+4. **Negative Dimensions** - Validates positive values
+
+## Database
+
+The tests use a separate database `trailers_db_test` which is:
+- Created fresh before each test run
+- Migrated with latest schema
+- Isolated from development data
+
+## Test Results
+
+After running, you'll find:
+- Console output with pass/fail status
+- `postman-test-results.json` - Detailed test results
 
 ## Troubleshooting
 
-1. **Connection Refused**: Make sure the application is running on port 3001
-2. **Database Errors**: Ensure PostgreSQL is running and migrations are applied
-3. **Port Conflicts**: Check if port 3001 is available
+### Database Connection Issues
+- Verify PostgreSQL is running
+- Check credentials in `.env.test`
+- Ensure user has CREATE DATABASE permissions
 
-## Manual Testing Examples
+### Port Conflicts
+- Default test port is 3001
+- Change in environment file if needed
 
-### Create a Trailer
-```bash
-curl -X POST http://localhost:3001/api/trailers \
-  -H "Content-Type: application/json" \
-  -d '{
-    "trailerType": "dry_van",
-    "ownershipType": "owned",
-    "year": 2023,
-    "vin": "1HGBH41JXMN109186"
-  }'
-```
+### Server Startup Issues
+- Check console output for errors
+- Ensure all dependencies are installed
+- Verify no other instance is running
 
-### Get All Trailers
-```bash
-curl http://localhost:3001/api/trailers
-```
+## Adding New Tests
 
-### Get Trailers with Filters
-```bash
-curl "http://localhost:3001/api/trailers?status=available&trailerType=dry_van&page=1&limit=10"
+1. Import collection into Postman
+2. Add new requests/tests
+3. Export collection back to this directory
+4. Update documentation
+
+## Environment Variables
+
+Test environment uses:
+- `DATABASE_URL` - Test database connection
+- `PORT` - Server port (default: 3001)
+- `NODE_ENV` - Set to 'test'
+
+## Best Practices
+
+1. Always run with fresh database
+2. Use meaningful test names
+3. Test both success and failure cases
+4. Clean up test data after runs
+5. Keep tests independent

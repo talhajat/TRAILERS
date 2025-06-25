@@ -2,6 +2,7 @@ import { Module, Controller, Get } from '@nestjs/common';
 import { TrailerController } from './presentation/controllers/TrailerController';
 import { CreateTrailerUseCase } from './application/use-cases/CreateTrailerUseCase';
 import { GetTrailersUseCase } from './application/use-cases/GetTrailersUseCase';
+import { GetTrailerByIdUseCase } from './application/use-cases/GetTrailerByIdUseCase';
 import { TrailerRepository } from './infrastructure/persistence/repositories/TrailerRepository';
 import { PrismaModule } from './infrastructure/persistence/prisma.module';
 import { ITrailerRepository } from './domain/repositories/ITrailerRepository';
@@ -44,6 +45,13 @@ class AppController {
       provide: GetTrailersUseCase,
       useFactory: (repository: ITrailerRepository) => {
         return new GetTrailersUseCase(repository);
+      },
+      inject: ['ITrailerRepository'],
+    },
+    {
+      provide: GetTrailerByIdUseCase,
+      useFactory: (repository: ITrailerRepository) => {
+        return new GetTrailerByIdUseCase(repository);
       },
       inject: ['ITrailerRepository'],
     },

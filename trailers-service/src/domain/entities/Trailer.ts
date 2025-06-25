@@ -193,6 +193,17 @@ export class Trailer {
   public getVin(): VIN | undefined { return this.vin; }
   public getYear(): number | undefined { return this.year; }
   public getColor(): string | undefined { return this.color; }
+  public getPurchaseDate(): Date | undefined { return this.purchaseDate; }
+  public getLeaseEndDate(): Date | undefined { return this.leaseEndDate; }
+  public getPurchasePrice(): number | undefined { return this.purchasePrice; }
+  public getLicensePlate(): string | undefined { return this.licensePlate; }
+  public getIssuingState(): string | undefined { return this.issuingState; }
+  public getRegistrationExp(): Date | undefined { return this.registrationExp; }
+  public getInsurancePolicy(): string | undefined { return this.insurancePolicy; }
+  public getInsuranceExp(): Date | undefined { return this.insuranceExp; }
+  public getJurisdiction(): string | undefined { return this.jurisdiction; }
+  public getGvwr(): number | undefined { return this.gvwr; }
+  public getAssignedYard(): string | undefined { return this.assignedYard; }
   public getCurrentLocation(): string | undefined { return this.currentLocation; }
   public getAttachedTruckId(): string | undefined { return this.attachedTruckId; }
   public getCreatedAt(): Date { return this.createdAt; }
